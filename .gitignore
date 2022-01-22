@@ -1,0 +1,5 @@
+# Ignore all sound files in the project
+*wav
+
+# Ignore personal project notes
+notes.txt
