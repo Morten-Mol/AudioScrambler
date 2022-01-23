@@ -1,0 +1,9 @@
+# Packages needed at runtime
+-r base_requirements.txt
+
+# Formatter
+pep8
+autopep8
+
+# Linter
+pycodestyle
