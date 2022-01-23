@@ -81,49 +81,33 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
         Returns:
         (list): Frequency values for the lower and upper boundary of the constructed band
         """
-        specific_width_high = center_freq + \
-            freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-        specific_width_low = center_freq - \
-            freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+        specific_width_high = center_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+        specific_width_low = center_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
         return [round(specific_width_low), round(specific_width_high)]
 
     # Estimate the central band frequency by interpolating the position using sc
-    specific_freq = round(freqs_num_of_data_points +
-                          freqs_num_of_data_points * (band1 / freqs[-1]))
+    specific_freq = round(freqs_num_of_data_points + freqs_num_of_data_points * (band1 / freqs[-1]))
 
     # Estimate the specific upper and lower frequency limits of the band
-    band1_freqs_data_points_pos = calc_band_boundaries(
-        specific_freq, freqs_num_of_data_points, width, freqs)
+    band1_freqs_data_points_pos = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
 
-    specific_freq = round(freqs_num_of_data_points -
-                          freqs_num_of_data_points * (band1 / freqs[-1]))
-    specific_width_high = specific_freq + \
-        freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-    specific_width_low = specific_freq - \
-        freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    specific_freq = round(freqs_num_of_data_points - freqs_num_of_data_points * (band1 / freqs[-1]))
+    specific_width_high = specific_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    specific_width_low = specific_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
 
-    band1_freqs_data_points_neg = [
-        round(specific_width_low), round(specific_width_high)]
+    band1_freqs_data_points_neg = [round(specific_width_low), round(specific_width_high)]
 
-    specific_freq = round(freqs_num_of_data_points +
-                          freqs_num_of_data_points * (band2 / freqs[-1]))
-    specific_width_high = specific_freq + \
-        freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-    specific_width_low = specific_freq - \
-        freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    specific_freq = round(freqs_num_of_data_points + freqs_num_of_data_points * (band2 / freqs[-1]))
+    specific_width_high = specific_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    specific_width_low = specific_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
 
-    band2_freqs_data_points_pos = [
-        round(specific_width_low), round(specific_width_high)]
+    band2_freqs_data_points_pos = [round(specific_width_low), round(specific_width_high)]
 
-    specific_freq = round(freqs_num_of_data_points -
-                          freqs_num_of_data_points * (band2 / freqs[-1]))
-    specific_width_high = specific_freq + \
-        freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-    specific_width_low = specific_freq - \
-        freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    specific_freq = round(freqs_num_of_data_points - freqs_num_of_data_points * (band2 / freqs[-1]))
+    specific_width_high = specific_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    specific_width_low = specific_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
 
-    band2_freqs_data_points_neg = [
-        round(specific_width_low), round(specific_width_high)]
+    band2_freqs_data_points_neg = [round(specific_width_low), round(specific_width_high)]
 
     # Make sure that each window has the same sample length
     # This error will occur due to the discrete nature of the frequency sampling
