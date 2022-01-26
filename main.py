@@ -130,12 +130,14 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
         band1_freqs_data_points_pos[1] = band1_freqs_data_points_pos[1] + 1
         band1_freqs_data_points_neg[1] = band1_freqs_data_points_neg[1] + 1
 
+    # Copy the references to the frequenciy values in the given frequency bands
     band1_pos_vals = freq_amp[band1_freqs_data_points_pos[0]:band1_freqs_data_points_pos[1]].copy()
     band1_neg_vals = freq_amp[band1_freqs_data_points_neg[0]:band1_freqs_data_points_neg[1]].copy()
 
     band2_pos_vals = freq_amp[band2_freqs_data_points_pos[0]:band2_freqs_data_points_pos[1]].copy()
     band2_neg_vals = freq_amp[band2_freqs_data_points_neg[0]:band2_freqs_data_points_neg[1]].copy()
 
+    # Insert the references into the original list of frequency amplitudes
     freq_amp[band1_freqs_data_points_pos[0]:band1_freqs_data_points_pos[1]] = band2_pos_vals
     freq_amp[band2_freqs_data_points_pos[0]:band2_freqs_data_points_pos[1]] = band1_pos_vals
 
