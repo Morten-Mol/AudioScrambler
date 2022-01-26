@@ -109,7 +109,7 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
     # BAND 2 CALCULATIONS #
 
     # Translate band frequency to index in frequency list
-    band_freq_index_pos = freqs_num_of_data_points * (band1 / freqs[-1])
+    band_freq_index_pos = freqs_num_of_data_points * (band2 / freqs[-1])
 
     # Estimate the positive central band frequency boundaries for band 2
     specific_freq = round(freqs_num_of_data_points + band_freq_index_pos)
