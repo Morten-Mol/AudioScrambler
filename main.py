@@ -81,33 +81,43 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
         Returns:
         (list): Frequency values for the lower and upper boundary of the constructed band
         """
-        specific_width_high = center_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-        specific_width_low = center_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+        # Translate a given frequency range to a number of data points in the frequency list
+        num_data_points_half_width = freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+
+        # Add/subtract the number of data points from the index of the center frequency to create the band boundaries
+        specific_width_high = center_freq + num_data_points_half_width
+        specific_width_low = center_freq - num_data_points_half_width
+
+        # Round the calculated index
         return [round(specific_width_low), round(specific_width_high)]
 
-    # Estimate the central band frequency by interpolating the position using sc
-    specific_freq = round(freqs_num_of_data_points + freqs_num_of_data_points * (band1 / freqs[-1]))
+    # BAND 1 CALCULATIONS #
 
-    # Estimate the specific upper and lower frequency limits of the band
+    # Translate band frequency to index in frequency list
+    band_freq_index_pos = freqs_num_of_data_points * (band1 / freqs[-1])
+
+    # Estimate the positive central band frequency boundaries for band 1
+    specific_freq = round(freqs_num_of_data_points + band_freq_index_pos)
+
+    # Estimate the negative central band frequency boundaries for band 1
     band1_freqs_data_points_pos = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
 
-    specific_freq = round(freqs_num_of_data_points - freqs_num_of_data_points * (band1 / freqs[-1]))
-    specific_width_high = specific_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-    specific_width_low = specific_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    # Estimate the central band frequency in the negative region aswell
+    specific_freq = round(freqs_num_of_data_points - band_freq_index_pos)
+    band1_freqs_data_points_neg = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
 
-    band1_freqs_data_points_neg = [round(specific_width_low), round(specific_width_high)]
+    # BAND 2 CALCULATIONS #
 
-    specific_freq = round(freqs_num_of_data_points + freqs_num_of_data_points * (band2 / freqs[-1]))
-    specific_width_high = specific_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-    specific_width_low = specific_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
+    # Translate band frequency to index in frequency list
+    band_freq_index_pos = freqs_num_of_data_points * (band1 / freqs[-1])
 
-    band2_freqs_data_points_pos = [round(specific_width_low), round(specific_width_high)]
+    # Estimate the positive central band frequency boundaries for band 2
+    specific_freq = round(freqs_num_of_data_points + band_freq_index_pos)
+    band2_freqs_data_points_pos = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
 
-    specific_freq = round(freqs_num_of_data_points - freqs_num_of_data_points * (band2 / freqs[-1]))
-    specific_width_high = specific_freq + freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-    specific_width_low = specific_freq - freqs_num_of_data_points * round(width*0.5) / freqs[-1]
-
-    band2_freqs_data_points_neg = [round(specific_width_low), round(specific_width_high)]
+    # Estimate the negative central band frequency boundaries for band 2
+    specific_freq = round(freqs_num_of_data_points - band_freq_index_pos)
+    band2_freqs_data_points_neg = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
 
     # Make sure that each window has the same sample length
     # This error will occur due to the discrete nature of the frequency sampling
