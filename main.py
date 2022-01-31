@@ -210,25 +210,25 @@ t_end = time()
 t_elapsed = t_end - t_start
 print("Time elapsed: " + str(t_elapsed) + " seconds")
 
-raw_freq_amp = ifftshift(freq_amp)
+# FFT shift the shuffled frequencies back before inverse FFT
+scrambled_signal_freq_amp = ifftshift(freq_amp)
 
-scrambled_signal_freq_amp = raw_freq_amp
+# Plot the frequency spectrum after shuffling
 fig, ax = plt.subplots()
 ax.plot(raw_freq, 2/len(raw)*np.abs(scrambled_signal_freq_amp[0:len(raw)//2]))
 ax.set_xlabel("Frequency [kHz]", fontsize=14)
 ax.set_ylabel("Spectrum amplitude [a.u.]", color="blue", fontsize=14)
 
-plt.figure()
-plt.plot(fftshift(scrambled_signal_freq_amp))
-
+# Inverse FFT and extract the real part of the time signal
 scrambled_signal = ifft(scrambled_signal_freq_amp)
 scrambled_signal = scrambled_signal.real
 
+# Plot the shuffled signal in time
 plt.figure()
 plt.plot(scrambled_signal)
-plt.title('Scrambled signal')
+plt.title('Scrambled time signal')
 
-
+# Convert the amplitude values to integers, such that they can be stored in a C-array
 scrambled_signal = [round(x) for x in scrambled_signal.tolist()]
 
 # Create scrambled audio file
