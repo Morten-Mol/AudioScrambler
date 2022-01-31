@@ -219,9 +219,9 @@ ax.plot(raw_freq, 2/len(raw)*np.abs(scrambled_signal_freq_amp[0:len(raw)//2]))
 ax.set_xlabel("Frequency [kHz]", fontsize=14)
 ax.set_ylabel("Spectrum amplitude [a.u.]", color="blue", fontsize=14)
 
-# Inverse FFT and extract the real part of the time signal
+# Inverse FFT and convert the complex frequency values to real values
 scrambled_signal = ifft(scrambled_signal_freq_amp)
-scrambled_signal = scrambled_signal.real
+scrambled_signal = np.abs(scrambled_signal)
 
 # Plot the shuffled signal in time
 plt.figure()
