@@ -18,7 +18,6 @@ filename = os.path.join(os.getcwd(), 'Recording.wav')
 with wave.open(filename, mode='rb') as wav:
     nchan, sample_width, sample_freq, total_samples, _, _ = wav.getparams()
 
-
 possible_sample_sizes = {1: 'B', 2: 'h', 4: 'i'}
 audio_sample_size = possible_sample_sizes[sample_width]
 
@@ -28,21 +27,22 @@ raw.fromfile(open(filename, 'rb'), int(os.path.getsize(filename)/raw.itemsize))
 
 # Clean out noise from first 60-70 samples
 raw = raw[56:]
-plt.figure()
-plt.plot(np.linspace(0, len(raw)/44e3, len(raw)), raw)
-plt.title('Raw audio signal')
-plt.xlabel('Time [s]')
-plt.ylabel('Amplitude [a.u.]')
+
+# Plot base audio signal
+fig, axs = plt.subplots(2, 2, figsize=(9, 9))
+fig.tight_layout(pad=3.0)
+axs[0, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), raw)
+axs[0, 0].set_title('Raw audio signal')
+axs[0, 0].set_ylabel('Amplitude [a.u.]')
 
 # Generate key for filtering
 raw_freq_amp = fft(raw)
 raw_freq = fftfreq(len(raw), 1/44e3)[:len(raw)//2]
 
-plt.figure()
-plt.plot(raw_freq/1e3, 2/len(raw)*np.abs(raw_freq_amp[0:len(raw)//2]))
-plt.title('Raw signal spectrum')
-plt.xlabel('Frequency [kHz]')
-plt.ylabel('Spectral amplitude [a.u.]')
+# Plot base frequency spectrum
+axs[0, 1].plot(raw_freq/1e3, 2/len(raw)*np.abs(raw_freq_amp[0:len(raw)//2]))
+axs[0, 1].set_title('Raw signal spectrum')
+axs[0, 1].set_ylabel('Spectral amplitude [a.u.]')
 
 # Get symmetric representation of frequencies of raw signal
 freqs = fftshift(fftfreq(len(raw), 1/44e3))
@@ -214,19 +214,23 @@ print("Time elapsed: " + str(t_elapsed) + " seconds")
 scrambled_signal_freq_amp = ifftshift(freq_amp)
 
 # Plot the frequency spectrum after shuffling
-fig, ax = plt.subplots()
-ax.plot(raw_freq, 2/len(raw)*np.abs(scrambled_signal_freq_amp[0:len(raw)//2]))
-ax.set_xlabel("Frequency [kHz]", fontsize=14)
-ax.set_ylabel("Spectrum amplitude [a.u.]", color="blue", fontsize=14)
+axs[1, 1].plot(raw_freq*1e-3, 2/len(raw)*np.abs(scrambled_signal_freq_amp[0:len(raw)//2]))
+axs[1, 1].set_xlabel("Frequency [kHz]")
+axs[1, 1].set_ylabel("Spectrum amplitude [a.u.]")
+axs[1, 1].set_title("Scrambled frequency spectrum")
 
 # Inverse FFT and convert the complex frequency values to real values
 scrambled_signal = ifft(scrambled_signal_freq_amp)
 scrambled_signal = np.abs(scrambled_signal)
 
 # Plot the shuffled signal in time
-plt.figure()
-plt.plot(scrambled_signal)
-plt.title('Scrambled time signal')
+axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_signal)
+axs[1, 0].set_title('Scrambled time signal')
+axs[1, 0].set_xlabel('Time [s]')
+axs[1, 0].set_ylabel('Amplitude [a.u.]')
+
+# Create common x and y labels on the subplot
+
 
 # Convert the amplitude values to integers, such that they can be stored in a C-array
 scrambled_signal = [round(x) for x in scrambled_signal.tolist()]
