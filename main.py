@@ -223,14 +223,12 @@ axs[1, 1].set_title("Scrambled frequency spectrum")
 scrambled_signal = ifft(scrambled_signal_freq_amp)
 scrambled_signal = np.abs(scrambled_signal)
 
+# TODO: Figure out why the shuffled time signal only consists of positive values
 # Plot the shuffled signal in time
 axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_signal)
 axs[1, 0].set_title('Scrambled time signal')
 axs[1, 0].set_xlabel('Time [s]')
 axs[1, 0].set_ylabel('Amplitude [a.u.]')
-
-# Create common x and y labels on the subplot
-
 
 # Convert the amplitude values to integers, such that they can be stored in a C-array
 scrambled_signal = [round(x) for x in scrambled_signal.tolist()]
