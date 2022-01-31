@@ -3,3 +3,6 @@
 
 # Ignore personal project notes
 notes.txt
+
+# Ignore venv on desktop
+.venv

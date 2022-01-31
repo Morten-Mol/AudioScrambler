@@ -3,6 +3,7 @@
 
 import wave
 import os
+import platform
 from array import array
 from time import time
 
@@ -10,9 +11,11 @@ import numpy as np
 from scipy.fft import fft, fftfreq, ifft, fftshift, ifftshift
 import matplotlib.pyplot as plt
 
-
 # Import audio file
-filename = os.getcwd()+'/Recording.wav'
+if platform.system() == "Linux":
+    filename = os.getcwd()+'/Recording.wav'
+elif platform.system() == "Windows":
+    filename = os.getcwd() + r'\Recording.wav'
 
 # Check for the audio sample size, given in bytes
 with wave.open(filename, mode='rb') as wav:
