@@ -12,10 +12,7 @@ from scipy.fft import fft, fftfreq, ifft, fftshift, ifftshift
 import matplotlib.pyplot as plt
 
 # Import audio file
-if platform.system() == "Linux":
-    filename = os.getcwd()+'/Recording.wav'
-elif platform.system() == "Windows":
-    filename = os.getcwd() + r'\Recording.wav'
+filename = os.path.join(os.getcwd(), 'Recording.wav')
 
 # Check for the audio sample size, given in bytes
 with wave.open(filename, mode='rb') as wav:
