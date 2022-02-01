@@ -1,11 +1,6 @@
 """"Main module"""
 # Audio scramble as an encryption method
 
-# TODO: Replace fft with rfft to only compute positive frequencies.
-#       This lets us half the amount of shuffling operations that we need to do.
-
-# TODO: Figure out why the shuffled time signal only consists of positive values
-
 
 import wave
 import os
@@ -13,7 +8,7 @@ from array import array
 from time import time
 
 import numpy as np
-from scipy.fft import fft, fftfreq, ifft, fftshift, ifftshift
+from scipy.fft import rfft, rfftfreq, irfft, fftshift, ifftshift
 import matplotlib.pyplot as plt
 
 # Import audio file
@@ -40,18 +35,15 @@ axs[0, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), raw)
 axs[0, 0].set_title('Raw audio signal')
 axs[0, 0].set_ylabel('Amplitude [a.u.]')
 
-# Generate key for filtering
-raw_freq_amp = fft(raw)
-raw_freq = fftfreq(len(raw), 1/44e3)[:len(raw)//2]
+# Calculate only positive frequency components of audio signal, so as to save computation time
+# and get real values directly from the inverse fourier transform
+raw_freq_amp = rfft(raw)
+raw_freq = rfftfreq(len(raw), 1/44e3)
 
-# Plot base frequency spectrum
-axs[0, 1].plot(raw_freq/1e3, 2/len(raw)*np.abs(raw_freq_amp[0:len(raw)//2]))
+# Plot base frequency spectrum - Note 1/n factor to scale spectrum amplitude
+axs[0, 1].plot(raw_freq/1e3, 1/len(raw)*np.abs(raw_freq_amp))
 axs[0, 1].set_title('Raw signal spectrum')
 axs[0, 1].set_ylabel('Spectral amplitude [a.u.]')
-
-# Get symmetric representation of frequencies of raw signal
-freqs = fftshift(fftfreq(len(raw), 1/44e3))
-freq_amp = fftshift(raw_freq_amp)
 
 
 def shuffle_freqs(band1, band2, width, freqs, freq_amp):
@@ -68,13 +60,13 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
         freq_amp(list): Shuffled list of frequency amplitudes
     """
 
-    # Scale to kHz
+    # Scale to Hz
     band1 = band1*1e3
     band2 = band2*1e3
     width = width*1e3
 
     # Calculate number of data points in the positive frequency region
-    freqs_num_of_data_points = len(freqs) - len(freqs)//2
+    freqs_num_of_data_points = len(freqs)
 
     def calc_band_boundaries(center_freq, freqs_num_of_data_points, width, freqs):
         """Given a center frequency in a spectrum, this method calculates the spectral value of the
@@ -104,15 +96,8 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
     # Translate band frequency to index in frequency list
     band1_freq_index_pos = freqs_num_of_data_points * (band1 / freqs[-1])
 
-    # Estimate the positive central band frequency boundaries for band 1
-    specific_freq = round(freqs_num_of_data_points + band1_freq_index_pos)
-
-    # Estimate the negative central band frequency boundaries for band 1
-    band1_freqs_data_points_pos = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
-
-    # Estimate the central band frequency in the negative region aswell
-    specific_freq = round(freqs_num_of_data_points - band1_freq_index_pos)
-    band1_freqs_data_points_neg = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
+    # Estimate the band boundaries for the given center band frequency
+    band1_freqs_data_points_pos = calc_band_boundaries(band1_freq_index_pos, freqs_num_of_data_points, width, freqs)
 
     # BAND 2 CALCULATIONS #
 
@@ -120,37 +105,24 @@ def shuffle_freqs(band1, band2, width, freqs, freq_amp):
     band2_freq_index_pos = freqs_num_of_data_points * (band2 / freqs[-1])
 
     # Estimate the positive central band frequency boundaries for band 2
-    specific_freq = round(freqs_num_of_data_points + band2_freq_index_pos)
-    band2_freqs_data_points_pos = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
-
-    # Estimate the negative central band frequency boundaries for band 2
-    specific_freq = round(freqs_num_of_data_points - band2_freq_index_pos)
-    band2_freqs_data_points_neg = calc_band_boundaries(specific_freq, freqs_num_of_data_points, width, freqs)
+    band2_freqs_data_points_pos = calc_band_boundaries(band2_freq_index_pos, freqs_num_of_data_points, width, freqs)
 
     # Make sure that each window has the same sample length
-    # This error will occur due to the discrete nature of the frequency sampling
+    # This error will occur due to the discrete nature of digital sampling
     diff_band1 = band1_freqs_data_points_pos[1]-band1_freqs_data_points_pos[0]
     diff_band2 = band2_freqs_data_points_pos[1]-band2_freqs_data_points_pos[0]
     if diff_band1 > diff_band2:
         band2_freqs_data_points_pos[1] = band2_freqs_data_points_pos[1] + 1
-        band2_freqs_data_points_neg[1] = band2_freqs_data_points_neg[1] + 1
     elif diff_band1 < diff_band2:
         band1_freqs_data_points_pos[1] = band1_freqs_data_points_pos[1] + 1
-        band1_freqs_data_points_neg[1] = band1_freqs_data_points_neg[1] + 1
 
     # Copy the references to the frequenciy values in the given frequency bands
     band1_pos_vals = freq_amp[band1_freqs_data_points_pos[0]:band1_freqs_data_points_pos[1]].copy()
-    band1_neg_vals = freq_amp[band1_freqs_data_points_neg[0]:band1_freqs_data_points_neg[1]].copy()
-
     band2_pos_vals = freq_amp[band2_freqs_data_points_pos[0]:band2_freqs_data_points_pos[1]].copy()
-    band2_neg_vals = freq_amp[band2_freqs_data_points_neg[0]:band2_freqs_data_points_neg[1]].copy()
 
     # Insert the references into the original list of frequency amplitudes
     freq_amp[band1_freqs_data_points_pos[0]:band1_freqs_data_points_pos[1]] = band2_pos_vals
     freq_amp[band2_freqs_data_points_pos[0]:band2_freqs_data_points_pos[1]] = band1_pos_vals
-
-    freq_amp[band1_freqs_data_points_neg[0]:band1_freqs_data_points_neg[1]] = band2_neg_vals
-    freq_amp[band2_freqs_data_points_neg[0]:band2_freqs_data_points_neg[1]] = band1_neg_vals
 
     return freq_amp
 
@@ -192,54 +164,55 @@ t_start = time()
 # Number of time shuffling operation is to be run
 n = 40e3
 
+# Band freqency width, given in kHz
+w = 0.1
+
+# Maximum frequency to be shuffled, given in kHz
+max_freq = 15
+
+# Start shuffling
 iterator = 1
 while iterator < n+1:
-    # Band freqency width
-    w = 0.2
-
-    # Maximum frequency to be shuffled
-    max_freq = 7
 
     # Generate random selection of center frequencies for the two bands
     band1_center_freq, band2_center_freq = get_shuffle_freqs(w, max_freq)
 
     # Swap the frequency values of the two bands with a given frequency width w
-    freq_amp = shuffle_freqs(band1_center_freq, band2_center_freq, w, freqs, freq_amp)
+    raw_freq_amp = shuffle_freqs(band1_center_freq, band2_center_freq, w, raw_freq, raw_freq_amp)
 
     # Increase iterator
     print(iterator)
     iterator += 1
+
+# Rename the shuffled frequency list for clarity
+shuffled_freq_amp = raw_freq_amp
 
 # Calculate the elapsed time for shuffling
 t_end = time()
 t_elapsed = t_end - t_start
 print("Time elapsed: " + str(t_elapsed) + " seconds")
 
-# FFT shift the shuffled frequencies back before inverse FFT
-scrambled_signal_freq_amp = ifftshift(freq_amp)
-
 # Plot the frequency spectrum after shuffling
-axs[1, 1].plot(raw_freq*1e-3, 2/len(raw)*np.abs(scrambled_signal_freq_amp[0:len(raw)//2]))
+axs[1, 1].plot(raw_freq*1e-3, 1/len(raw)*np.abs(shuffled_freq_amp))
 axs[1, 1].set_xlabel("Frequency [kHz]")
 axs[1, 1].set_ylabel("Spectrum amplitude [a.u.]")
 axs[1, 1].set_title("Scrambled frequency spectrum")
 
 # Inverse FFT and convert the complex frequency values to real values
-scrambled_signal = ifft(scrambled_signal_freq_amp)
-scrambled_signal = np.abs(scrambled_signal)
+scrambled_time_signal = irfft(shuffled_freq_amp, n=len(raw))
 
 # Plot the shuffled signal in time
-axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_signal)
+axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_time_signal)
 axs[1, 0].set_title('Scrambled time signal')
 axs[1, 0].set_xlabel('Time [s]')
 axs[1, 0].set_ylabel('Amplitude [a.u.]')
 
 # Convert the amplitude values to integers, such that they can be stored in a C-array
-scrambled_signal = [round(x) for x in scrambled_signal.tolist()]
+scrambled_time_signal = [round(x) for x in scrambled_time_signal.tolist()]
 
 # Create scrambled audio file
 scrambled_audio_raw = array(audio_sample_size)
-scrambled_audio_raw.fromlist(scrambled_signal)
+scrambled_audio_raw.fromlist(scrambled_time_signal)
 
 with wave.open('Scramled_audio.wav', mode='wb') as scrambled_audio:
     scrambled_audio.setnchannels(nchan)
