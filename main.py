@@ -1,9 +1,14 @@
 """"Main module"""
 # Audio scramble as an encryption method
 
+# TODO: Replace fft with rfft to only compute positive frequencies.
+#       This lets us half the amount of shuffling operations that we need to do.
+
+# TODO: Figure out why the shuffled time signal only consists of positive values
+
+
 import wave
 import os
-import platform
 from array import array
 from time import time
 
@@ -223,7 +228,6 @@ axs[1, 1].set_title("Scrambled frequency spectrum")
 scrambled_signal = ifft(scrambled_signal_freq_amp)
 scrambled_signal = np.abs(scrambled_signal)
 
-# TODO: Figure out why the shuffled time signal only consists of positive values
 # Plot the shuffled signal in time
 axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_signal)
 axs[1, 0].set_title('Scrambled time signal')
