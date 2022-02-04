@@ -1,4 +1,4 @@
-""""Main module"""
+"""Main module"""
 # Audio scramble as an encryption method
 
 
@@ -8,7 +8,7 @@ from array import array
 from time import time
 
 import numpy as np
-from scipy.fft import rfft, rfftfreq, irfft, fftshift, ifftshift
+from scipy.fft import rfft, rfftfreq, irfft
 import matplotlib.pyplot as plt
 
 # Import audio file
