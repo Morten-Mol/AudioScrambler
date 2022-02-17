@@ -6,3 +6,6 @@ notes.txt
 
 # Ignore venv on desktop
 .venv
+
+# Ignore the python cache folder
+__pycache__

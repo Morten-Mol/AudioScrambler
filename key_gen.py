@@ -62,6 +62,8 @@ def _create_scrambling_key(Generator, n, w, max_freq):
         scrambling_key[i]['b1_cfreq'] = band1_center_freq
         scrambling_key[i]['b2_cfreq'] = band2_center_freq
 
+    print('1st key item:' + str(scrambling_key[0]))
+    print('last key' + str(scrambling_key[-1]))
     return scrambling_key
 
 
@@ -95,14 +97,16 @@ def _create_de_scrambling_key(Generator, n, w, max_freq):
         de_scrambling_key[i]['b1_cfreq'] = band1_center_freq
         de_scrambling_key[i]['b2_cfreq'] = band2_center_freq
 
+    print('1st key item:' + str(de_scrambling_key[0]))
+    print('last key' + str(de_scrambling_key[-1]))
     return de_scrambling_key
 
 
-def key_generator(dir_entries, n, w, max_freq):
+def key_generator(type_of_scrambling, n, w, max_freq):
     """Generate key for scrambling/de-scrambling an audio sequence based on a given password.
 
     Args:
-        dir_entries (list(str)): All files in the current working directory
+        type_of_scrambling (str): Flag to control if the action needed is 'scrambling' or 'de-scrambling'
         n (uint): Amount of shuffling operations to be done
         w (float): Bandwidth of the spectral bands to be shuffled, given in kHz
         max_freq (float): Max frequency to be shuffled, given in kHz
@@ -113,14 +117,12 @@ def key_generator(dir_entries, n, w, max_freq):
     # Get password and transform it into seeded random number generator
     rng_generator = _create_generator(_get_password())
 
-    # If there is a file in the current directory named "Scrambled_Audio.wav", transform encryption key into
-    # de-scrambling instructions
-    if "Scrambled_Audio.wav" in dir_entries:
+    # Create key for specific operation based on type of scrambling
+    if type_of_scrambling == 'de-scrambling':
         return _create_de_scrambling_key(rng_generator, n, w, max_freq)
+    elif type_of_scrambling == 'scrambling':
+        # If there is not a "Scrambled Audio.wav" file, create scrambling instructions from it
+        return _create_scrambling_key(rng_generator, n, w, max_freq)
     else:
-        if "Recording.wav" in dir_entries:
-            # If there is not a "Scrambled Audio.wav" file, create scrambling instructions from it
-            return _create_scrambling_key(rng_generator, n, w, max_freq)
-        else:
-            # We need a recording to start with, so we raise and error
-            raise FileNotFoundError("No recordings found in current directory - Please add one")
+        # We need a recording to start with, so we raise and error
+        raise FileNotFoundError("No recordings found in current directory - Please add one")

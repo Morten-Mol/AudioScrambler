@@ -10,19 +10,20 @@ from scipy.fft import rfft, rfftfreq, irfft
 import matplotlib.pyplot as plt
 
 
-def scramble_audio_file(key, w, type_of_scrambling):
+def scramble_audio_file(key, w, type_of_scrambling, plot_debug):
     """Scrambles frequency bands of an audio file.
 
     Args:
         key (list(dicts)): List of dictionaries, each containing a set of frequencies to be shuffled.
         w (float): Bandwidth of the spectra to be shuffled, given in kHz
         type_of_scrambling (str): Flag to control if the action needed is 'scrambling' or 'de-scrambling'
+        plot_debug (bool): Flag to control whether plots of the shuffling are to be created.
 
     Returns:
         None
     """
     # Import audio file
-    if type_of_scrambling is 'scrambling':
+    if type_of_scrambling == 'scrambling':
         fn_start = 'Recording.wav'
     else:
         fn_start = 'Scrambled_audio.wav'
@@ -32,43 +33,48 @@ def scramble_audio_file(key, w, type_of_scrambling):
     # Check for the audio sample size, given in bytes
     with wave.open(filename, mode='rb') as wav:
         nchan, sample_width, sample_freq, total_samples, _, _ = wav.getparams()
+        print(total_samples)
 
     possible_sample_sizes = {1: 'B', 2: 'h', 4: 'i'}
     audio_sample_size = possible_sample_sizes[sample_width]
 
     # Create array with the same type as the audio sample size
     raw = array(audio_sample_size)
-    raw.fromfile(open(filename, 'rb'), int(os.path.getsize(filename)/raw.itemsize))
+    raw.fromfile(open(filename, 'rb'), int(total_samples))
+    # int(os.path.getsize(filename)/raw.itemsize)
 
-    # Clean out noise from first 60-70 samples
-    raw = raw[56:]
+    # Clean out noise from first 60-70 samples of initial audio input
+    for array_index in range(57):
+        raw[array_index] = 0
 
-    # Plot base audio signal
-    fig, axs = plt.subplots(2, 2, figsize=(9, 9))
-    fig.tight_layout(pad=3.0)
-    axs[0, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), raw)
+    if plot_debug:
+        # Plot base audio signal
+        fig, axs = plt.subplots(2, 2, figsize=(9, 9))
+        fig.tight_layout(pad=3.0)
+        axs[0, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), raw)
 
-    if type_of_scrambling is "scrambling":
-        axs[0, 0].set_title('Raw audio signal')
-    else:
-        axs[0, 0].set_title('Scrambled audio signal')
+        if type_of_scrambling == "scrambling":
+            axs[0, 0].set_title('Raw audio signal')
+        else:
+            axs[0, 0].set_title('Scrambled audio signal')
 
-    axs[0, 0].set_ylabel('Amplitude [a.u.]')
+        axs[0, 0].set_ylabel('Amplitude [a.u.]')
 
     # Calculate only positive frequency components of audio signal, so as to save computation time
     # and get real values directly from the inverse fourier transform
     raw_freq_amp = rfft(raw)
     raw_freq = rfftfreq(len(raw), 1/44e3)
 
-    # Plot base frequency spectrum - Note 1/n factor to scale spectrum amplitude
-    axs[0, 1].plot(raw_freq/1e3, 1/len(raw)*np.abs(raw_freq_amp))
+    if plot_debug:
+        # Plot base frequency spectrum - Note 1/n factor to scale spectrum amplitude
+        axs[0, 1].plot(raw_freq/1e3, 1/len(raw)*np.abs(raw_freq_amp))
 
-    if type_of_scrambling is "scrambling":
-        axs[0, 1].set_title('Raw signal spectrum')
-    else:
-        axs[0, 1].set_title('Scrambled signal spectrum')
+        if type_of_scrambling == "scrambling":
+            axs[0, 1].set_title('Raw signal spectrum')
+        else:
+            axs[0, 1].set_title('Scrambled signal spectrum')
 
-    axs[0, 1].set_ylabel('Spectral amplitude [a.u.]')
+        axs[0, 1].set_ylabel('Spectral amplitude [a.u.]')
 
     def shuffle_freqs(band1, band2, width, freqs, freq_amp):
         """Exchange frequency amplitude values for two given frequency bands with a given width.
@@ -114,6 +120,7 @@ def scramble_audio_file(key, w, type_of_scrambling):
             specific_width_low = center_freq - num_data_points_half_width
 
             # Round the calculated index
+            print([round(specific_width_low), round(specific_width_high)])
             return [round(specific_width_low), round(specific_width_high)]
 
         # BAND 1 CALCULATIONS #
@@ -138,8 +145,10 @@ def scramble_audio_file(key, w, type_of_scrambling):
         diff_band2 = band2_freqs_data_points_pos[1]-band2_freqs_data_points_pos[0]
         if diff_band1 > diff_band2:
             band2_freqs_data_points_pos[1] = band2_freqs_data_points_pos[1] + 1
+            print('band_diff b1>b2')
         elif diff_band1 < diff_band2:
             band1_freqs_data_points_pos[1] = band1_freqs_data_points_pos[1] + 1
+            print('band_diff b2>b1')
 
         # Copy the references to the frequenciy values in the given frequency bands
         band1_pos_vals = freq_amp[band1_freqs_data_points_pos[0]:band1_freqs_data_points_pos[1]].copy()
@@ -161,14 +170,14 @@ def scramble_audio_file(key, w, type_of_scrambling):
     iterator = 1
     while iterator < n+1:
         # Access each entry of the key and shuffle the frequencies one step at a time
-        band1_center_freq = key[n-1]['b1_cfreq']
-        band2_center_freq = key[n-1]['b2_cfreq']
+        band1_center_freq = key[iterator-1]['b1_cfreq']
+        band2_center_freq = key[iterator-1]['b2_cfreq']
 
         # Swap the frequency values of the two bands with a given frequency width w
         raw_freq_amp = shuffle_freqs(band1_center_freq, band2_center_freq, w, raw_freq, raw_freq_amp)
 
         # Increase iterator
-        print(iterator)
+        print(iterator, end='\r')
         iterator += 1
 
     # Rename the shuffled frequency list for clarity
@@ -179,29 +188,31 @@ def scramble_audio_file(key, w, type_of_scrambling):
     t_elapsed = t_end - t_start
     print("Time elapsed: " + str(t_elapsed) + " seconds")
 
-    # Plot the frequency spectrum after shuffling
-    axs[1, 1].plot(raw_freq*1e-3, 1/len(raw)*np.abs(shuffled_freq_amp))
-    axs[1, 1].set_xlabel("Frequency [kHz]")
-    axs[1, 1].set_ylabel("Spectrum amplitude [a.u.]")
+    if plot_debug:
+        # Plot the frequency spectrum after shuffling
+        axs[1, 1].plot(raw_freq*1e-3, 1/len(raw)*np.abs(shuffled_freq_amp))
+        axs[1, 1].set_xlabel("Frequency [kHz]")
+        axs[1, 1].set_ylabel("Spectrum amplitude [a.u.]")
 
-    if type_of_scrambling is "scrambling":
-        axs[1, 1].set_title("Scrambled frequency spectrum")
-    else:
-        axs[1, 1].set_title("De-scrambled frequency spectrum")
+        if type_of_scrambling == "scrambling":
+            axs[1, 1].set_title("Scrambled frequency spectrum")
+        else:
+            axs[1, 1].set_title("De-scrambled frequency spectrum")
 
     # Inverse FFT and convert the complex frequency values to real values
     scrambled_time_signal = irfft(shuffled_freq_amp, n=len(raw))
 
-    # Plot the shuffled signal in time
-    axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_time_signal)
+    if plot_debug:
+        # Plot the shuffled signal in time
+        axs[1, 0].plot(np.linspace(0, len(raw)/44e3, len(raw)), scrambled_time_signal)
 
-    if type_of_scrambling is "scrambling":
-        axs[1, 0].set_title('Scrambled time signal')
-    else:
-        axs[1, 0].set_title('De-scrambled time signal')
+        if type_of_scrambling == "scrambling":
+            axs[1, 0].set_title('Scrambled time signal')
+        else:
+            axs[1, 0].set_title('De-scrambled time signal')
 
-    axs[1, 0].set_xlabel('Time [s]')
-    axs[1, 0].set_ylabel('Amplitude [a.u.]')
+        axs[1, 0].set_xlabel('Time [s]')
+        axs[1, 0].set_ylabel('Amplitude [a.u.]')
 
     # Convert the amplitude values to integers, such that they can be stored in a C-array
     scrambled_time_signal = [round(x) for x in scrambled_time_signal.tolist()]
@@ -211,8 +222,8 @@ def scramble_audio_file(key, w, type_of_scrambling):
     scrambled_audio_raw.fromlist(scrambled_time_signal)
 
     # Save scrambled or de-scrambled audio file under an appropiate name depending on the type of operation
-    if type_of_scrambling is 'scrambling':
-        fn_end = 'Scramled_audio.wav'
+    if type_of_scrambling == 'scrambling':
+        fn_end = 'Scrambled_audio.wav'
     else:
         fn_end = 'De_scrambled_audio.wav'
 
@@ -222,3 +233,6 @@ def scramble_audio_file(key, w, type_of_scrambling):
         scrambled_audio.setframerate(sample_freq)
         scrambled_audio.setnframes(len(raw))
         scrambled_audio.writeframes(scrambled_audio_raw)
+
+    # Test return spectra for comparison
+    return raw_freq_amp, shuffled_freq_amp
