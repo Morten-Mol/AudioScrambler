@@ -4,6 +4,7 @@ import wave
 import os
 from array import array
 from time import time
+from copy import deepcopy
 
 import numpy as np
 from scipy.fft import rfft, rfftfreq, irfft
@@ -64,6 +65,9 @@ def scramble_audio_file(key, w, type_of_scrambling, plot_debug):
     # and get real values directly from the inverse fourier transform
     raw_freq_amp = rfft(raw)
     raw_freq = rfftfreq(len(raw), 1/44e3)
+
+    # Save original spectrum for debugging purposes
+    initial_freq_amp = deepcopy(raw_freq_amp)
 
     if plot_debug:
         # Plot base frequency spectrum - Note 1/n factor to scale spectrum amplitude
@@ -235,4 +239,4 @@ def scramble_audio_file(key, w, type_of_scrambling, plot_debug):
         scrambled_audio.writeframes(scrambled_audio_raw)
 
     # Test return spectra for comparison
-    return raw_freq_amp, shuffled_freq_amp
+    return initial_freq_amp, shuffled_freq_amp

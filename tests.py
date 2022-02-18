@@ -13,7 +13,7 @@ from scrambler import scramble_audio_file
 PLOT_DEBUG = True
 
 # Amount of shuffling operations to be done
-NUMBER_OF_SHUFFLING_ITERATIONS = int(2)
+NUMBER_OF_SHUFFLING_ITERATIONS = int(1e4)
 
 # Bandwidth of each frequency band to be shuffled with each other, given in kHz
 BANDWIDTH = 1
@@ -27,13 +27,13 @@ MAX_SHUFFLING_FREQUENCY = 15
 key_scram = key_generator('scrambling', NUMBER_OF_SHUFFLING_ITERATIONS, BANDWIDTH, MAX_SHUFFLING_FREQUENCY)
 
 # Use encryption as instructions for the frequency scrambling function
-_, s = scramble_audio_file(key_scram, BANDWIDTH, 'scrambling', PLOT_DEBUG)
+r, _ = scramble_audio_file(key_scram, BANDWIDTH, 'scrambling', PLOT_DEBUG)
 
 # Generate encryption key from user input - de-scrambling
 key_descram = key_generator('de-scrambling', NUMBER_OF_SHUFFLING_ITERATIONS, BANDWIDTH, MAX_SHUFFLING_FREQUENCY)
 
 # Use encryption as instructions for the frequency de-scrambling function
-r, _ = scramble_audio_file(key_descram, BANDWIDTH, 'de-scrambling', PLOT_DEBUG)
+_, s = scramble_audio_file(key_descram, BANDWIDTH, 'de-scrambling', PLOT_DEBUG)
 
 list_index = 0
 key_len = len(key_descram)
