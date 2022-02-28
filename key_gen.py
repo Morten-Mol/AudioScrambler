@@ -102,7 +102,7 @@ def _create_de_scrambling_key(Generator, n, w, max_freq):
     return de_scrambling_key
 
 
-def key_generator(type_of_scrambling, n, w, max_freq):
+def key_generator(type_of_scrambling, n, w, max_freq, debug_pass):
     """Generate key for scrambling/de-scrambling an audio sequence based on a given password.
 
     Args:
@@ -110,12 +110,16 @@ def key_generator(type_of_scrambling, n, w, max_freq):
         n (uint): Amount of shuffling operations to be done
         w (float): Bandwidth of the spectral bands to be shuffled, given in kHz
         max_freq (float): Max frequency to be shuffled, given in kHz
+        debug_pass (string, optional): Bypass user input and use the supplied string as password. Used for tests.
 
     Returns:
         (list(dict)): Key containing a list of dictionaries, each containing a set of frequencies to be shuffled
     """
     # Get password and transform it into seeded random number generator
-    rng_generator = _create_generator(_get_password())
+    if debug_pass is None:
+        rng_generator = _create_generator(_get_password())
+    else:
+        rng_generator = _create_generator(debug_pass)
 
     # Create key for specific operation based on type of scrambling
     if type_of_scrambling == 'de-scrambling':

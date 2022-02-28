@@ -7,3 +7,6 @@ autopep8
 
 # Linter
 pycodestyle
+
+# Testing framework
+pytest
