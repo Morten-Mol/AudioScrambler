@@ -7,6 +7,20 @@ import numpy as np
 from key_gen import *
 from scrambler import scramble_audio_file
 
+# Make parametrize object for the fixture to iterate through
+# Something like
+#
+# Class fixture_params
+#   self.NUMBER_OF_SHUFFLING_ITERATIONS = ?
+#   self.BANDWIDTH = ?
+#   self.MAX_SHUFFLING_FREQUENCY = ?
+#
+# Then the fixture could be called like
+# @pytest.fixture(scope="module", params=[fixture_params(val1, val2, val3),fixture_params(val3, val4, val5),....])
+#
+# It could then be used in the fixture function as
+#   NUMBER_OF_SHUFFLING_ITERATIONS = request.param.NUMBER_OF_SHUFFLING_ITERATIONS
+
 
 class FixtureOutput():
     """Object containging all parameters of interest from a full scramble to de-scramble operation.
@@ -21,8 +35,8 @@ class FixtureOutput():
         self.key_descram = key_descram
 
 
-# Arrange test parameters
-@pytest.fixture
+# Arrange test parameters - Use scope = "module" to only invoke the test fixture once for all tests in the the module
+@pytest.fixture(scope="module")
 def init_test_scrambling():
     """Pytest fixture used to setup a scrambled and de_scrambled signal together with their respective keys.
 
