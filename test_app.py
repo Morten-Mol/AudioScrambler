@@ -7,19 +7,14 @@ import numpy as np
 from key_gen import *
 from scrambler import scramble_audio_file
 
-# Make parametrize object for the fixture to iterate through
-# Something like
-#
-# Class fixture_params
-#   self.NUMBER_OF_SHUFFLING_ITERATIONS = ?
-#   self.BANDWIDTH = ?
-#   self.MAX_SHUFFLING_FREQUENCY = ?
-#
-# Then the fixture could be called like
-# @pytest.fixture(scope="module", params=[fixture_params(val1, val2, val3),fixture_params(val3, val4, val5),....])
-#
-# It could then be used in the fixture function as
-#   NUMBER_OF_SHUFFLING_ITERATIONS = request.param.NUMBER_OF_SHUFFLING_ITERATIONS
+
+class FixtureParametrizeParams():
+    """Object containg all varibles that can be changed during a test run signal shuffling and de-shufling."""
+
+    def __init__(self, NUMBER_OF_SHUFFLING_ITERATIONS, BANDWIDTH, MAX_SHUFFLING_FREQUENCY):
+        self.NUMBER_OF_SHUFFLING_ITERATIONS = NUMBER_OF_SHUFFLING_ITERATIONS
+        self.BANDWIDTH = BANDWIDTH
+        self.MAX_SHUFFLING_FREQUENCY = MAX_SHUFFLING_FREQUENCY
 
 
 class FixtureOutput():
@@ -35,9 +30,15 @@ class FixtureOutput():
         self.key_descram = key_descram
 
 
-# Arrange test parameters - Use scope = "module" to only invoke the test fixture once for all tests in the the module
-@pytest.fixture(scope="module")
-def init_test_scrambling():
+# List of parameters to test - could be automatized to cover wider range of variables
+test_params = [FixtureParametrizeParams(NUMBER_OF_SHUFFLING_ITERATIONS=1e3, BANDWIDTH=1, MAX_SHUFFLING_FREQUENCY=15),
+               FixtureParametrizeParams(NUMBER_OF_SHUFFLING_ITERATIONS=1e2, BANDWIDTH=2, MAX_SHUFFLING_FREQUENCY=10)]
+
+
+# Arrange test parameters - Use scope = "module" to only invoke the test fixture once for all tests in the the module.
+# Cycle through all test parameters described in the test_params list
+@pytest.fixture(scope="module", params=test_params)
+def init_test_scrambling(request):
     """Pytest fixture used to setup a scrambled and de_scrambled signal together with their respective keys.
 
     Args:
@@ -54,13 +55,13 @@ def init_test_scrambling():
     PLOT_DEBUG = False
 
     # Amount of shuffling operations to be done
-    NUMBER_OF_SHUFFLING_ITERATIONS = int(1e3)
+    NUMBER_OF_SHUFFLING_ITERATIONS = int(request.param.NUMBER_OF_SHUFFLING_ITERATIONS)
 
     # Bandwidth of each frequency band to be shuffled with each other, given in kHz
-    BANDWIDTH = 1
+    BANDWIDTH = request.param.BANDWIDTH
 
     # The upper limit frequency to be shuffled, given in kHz
-    MAX_SHUFFLING_FREQUENCY = 15
+    MAX_SHUFFLING_FREQUENCY = request.param.MAX_SHUFFLING_FREQUENCY
 
     # Hardcoded password used for testing to avoid asking for user input
     DEBUG_PASSWORD = 'password'
