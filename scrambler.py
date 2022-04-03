@@ -124,7 +124,11 @@ def scramble_audio_file(key, w, type_of_scrambling, plot_debug):
             specific_width_low = center_freq - num_data_points_half_width
 
             # Round the calculated index
-            print([round(specific_width_low), round(specific_width_high)])
+            #
+            # Debug tool
+            with open('./debugging/index_numbers.txt', 'a') as f:
+                f.write(f'{round(specific_width_low)},{round(specific_width_high)}\n')
+
             return [round(specific_width_low), round(specific_width_high)]
 
         # BAND 1 CALCULATIONS #
